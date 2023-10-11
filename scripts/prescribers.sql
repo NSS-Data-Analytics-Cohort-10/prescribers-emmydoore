@@ -17,6 +17,7 @@ using (npi)
 group by npi, nppes_provider_first_name, nppes_provider_last_org_name,  specialty_description
 order by sum(total_claim_count) desc;
 --Answer: Bruce Pendley, 99707
+
 -- 2. 
 --     a. Which specialty had the most total number of claims (totaled over all drugs)?
 select specialty_description, sum(total_claim_count) as total_number_of_claims
@@ -45,31 +46,40 @@ order by total_number_of_claims desc;
 
 -- 3. 
 --     a. Which drug (generic_name) had the highest total drug cost?
-select generic_name, cast(total_drug_cost as money)
-from drug
-inner join prescription
-using (drug_name)
-group by generic_name, total_drug_cost
-order by total_drug_cost desc;
---Answer: PIRFENIDONE
+
+ select generic_name, sum(total_drug_cost)
+ from drug
+ inner join prescription
+ using (drug_name)
+ group by generic_name
+ order by sum(total_drug_cost) desc
+--Answer: INSULIN GLARGINE,HUM.REC.ANLOG
 
 --     b. Which drug (generic_name) has the hightest total cost per day? **Bonus: Round your cost per day column to 2 decimal places. Google ROUND to see how this works.**
-select generic_name, cast(total_drug_cost as money)/30 as total_cost_per_day
-from drug
-inner join prescription
-using (drug_name)
-group by generic_name, total_drug_cost
-order by total_drug_cost desc;
+
 -- 4. 
 --     a. For each drug in the drug table, return the drug name and then a column named 'drug_type' which says 'opioid' for drugs which have opioid_drug_flag = 'Y', says 'antibiotic' for those drugs which have antibiotic_drug_flag = 'Y', and says 'neither' for all other drugs.
 
---     b. Building off of the query you wrote for part a, determine whether more was spent (total_drug_cost) on opioids or on antibiotics. Hint: Format the total costs as MONEY for easier comparision.
+select drug_name, 
+		case when opioid_drug_flag='Y' then 'opioid'
+		 when antibiotic_drug_flag='Y' then 'antibiotic'
+		 else 'neither' end as drug_type 
+from drug
+group by drug_name, drug_type;
 
+--     b. Building off of the query you wrote for part a, determine whether more was spent (total_drug_cost) on opioids or on antibiotics. Hint: Format the total costs as MONEY for easier comparision.
+select drug_name, 
+		case when opioid_drug_flag='Y' then 'opioid'
+		 when antibiotic_drug_flag='Y' then 'antibiotic'
+		 else 'neither' end as drug_type,
+		 total_drug_cost
+from drug
+group by drug_name, drug_type;
 -- 5. 
 --     a. How many CBSAs are in Tennessee? **Warning:** The cbsa table contains information for all states, not just Tennessee.
 
 --     b. Which cbsa has the largest combined population? Which has the smallest? Report the CBSA name and total population.
-
+--10 or 11 rows
 --     c. What is the largest (in terms of population) county which is not included in a CBSA? Report the county name and population.
 
 -- 6. 

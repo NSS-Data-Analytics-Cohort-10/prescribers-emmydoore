@@ -1,12 +1,43 @@
 -- 1. 
 --     a. Which prescriber had the highest total number of claims (totaled over all drugs)? Report the npi and the total number of claims.
-    
+select npi, sum(total_claim_count) as total_number_of_claims
+from prescriber
+inner join prescription
+using (npi)
+group by npi
+order by count(drug_name) desc;
+--Prescriber 1356305197, 68721 claims
+
 --     b. Repeat the above, but this time report the nppes_provider_first_name, nppes_provider_last_org_name,  specialty_description, and the total number of claims.
 
+select npi, nppes_provider_first_name, nppes_provider_last_org_name,  specialty_description, sum(total_claim_count) as total_number_of_claims
+from prescriber
+inner join prescription
+using (npi)
+group by npi, nppes_provider_first_name, nppes_provider_last_org_name,  specialty_description
+order by sum(total_claim_count) desc;
+--Answer: Bruce Pendley, 99707
 -- 2. 
 --     a. Which specialty had the most total number of claims (totaled over all drugs)?
+select specialty_description, sum(total_claim_count) as total_number_of_claims
+from prescriber
+inner join prescription
+using (npi)
+group by specialty_description 
+order by total_number_of_claims desc;
+--Answer: Family Practice, 9752347
 
 --     b. Which specialty had the most total number of claims for opioids?
+select p1.specialty_description, sum(p2.total_claim_count) as total_number_of_claims
+from prescriber as p1
+inner join prescription as p2
+using (npi)
+inner join drug as d
+on p2.drug_name = d.drug_name
+where opioid_drug_flag='Y'
+group by p1.specialty_description 
+order by total_number_of_claims desc;
+--Nurse Practioner, 900845
 
 --     c. **Challenge Question:** Are there any specialties that appear in the prescriber table that have no associated prescriptions in the prescription table?
 
@@ -14,9 +45,21 @@
 
 -- 3. 
 --     a. Which drug (generic_name) had the highest total drug cost?
+select generic_name, cast(total_drug_cost as money)
+from drug
+inner join prescription
+using (drug_name)
+group by generic_name, total_drug_cost
+order by total_drug_cost desc;
+--Answer: PIRFENIDONE
 
 --     b. Which drug (generic_name) has the hightest total cost per day? **Bonus: Round your cost per day column to 2 decimal places. Google ROUND to see how this works.**
-
+select generic_name, cast(total_drug_cost as money)/30 as total_cost_per_day
+from drug
+inner join prescription
+using (drug_name)
+group by generic_name, total_drug_cost
+order by total_drug_cost desc;
 -- 4. 
 --     a. For each drug in the drug table, return the drug name and then a column named 'drug_type' which says 'opioid' for drugs which have opioid_drug_flag = 'Y', says 'antibiotic' for those drugs which have antibiotic_drug_flag = 'Y', and says 'neither' for all other drugs.
 

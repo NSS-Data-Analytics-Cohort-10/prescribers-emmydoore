@@ -57,6 +57,14 @@ order by total_number_of_claims desc;
 
 --     b. Which drug (generic_name) has the hightest total cost per day? **Bonus: Round your cost per day column to 2 decimal places. Google ROUND to see how this works.**
 
+ select generic_name, ROUND(sum(total_drug_cost)/sum(total_30_day_fill_count), 2) as total_cost_per_day
+ from drug
+ inner join prescription
+ using (drug_name)
+ group by generic_name
+ order by sum(total_drug_cost)/sum(total_30_day_fill_count) desc
+ --Answer: CHEBODIOL
+ 
 -- 4. 
 --     a. For each drug in the drug table, return the drug name and then a column named 'drug_type' which says 'opioid' for drugs which have opioid_drug_flag = 'Y', says 'antibiotic' for those drugs which have antibiotic_drug_flag = 'Y', and says 'neither' for all other drugs.
 

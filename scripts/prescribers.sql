@@ -46,7 +46,8 @@ order by total_number_of_claims desc;
 
 select p1.specialty_description, 
 		sum(p2.total_claim_count) 
-		as total_number_of_claims
+		as opioid_claims
+		--fixed alias
 from prescriber as p1
 inner join prescription as p2
 using (npi)
@@ -60,14 +61,14 @@ order by total_number_of_claims desc;
 --     c. **Challenge Question:** Are there any specialties that appear in the prescriber table that have no associated prescriptions in the prescription table?
 
 select p1.specialty_description, 
-		p2.drug_name
+		count(p2.drug_name) as drug_count
+		--added count ^
 from prescriber as p1
 left join prescription as p2
 using (npi)
-where p2.drug_name is null
-group by p1.specialty_description, 
-		p2.drug_name;
---Answer: There are 92 specialities that have no associated prescriptions
+group by p1.specialty_description
+having count(p2.drug_name)=0;
+--Answer: There are 15 specialities that have no associated prescriptions
 
 --     d. **Difficult Bonus:** *Do not attempt until you have solved all other problems!* For each specialty, report the percentage of total claims by that specialty which are for opioids. Which specialties have a high percentage of opioids?
 
@@ -146,12 +147,11 @@ WHERE cbsaname like '%TN%';
 --Answer: 10
 
 --     b. Which cbsa has the largest combined population? Which has the smallest? Report the CBSA name and total population.
-
 select cbsaname, cbsa, sum(population) as total_population
 from cbsa
 inner join population
 using (fipscounty)
-WHERE cbsaname like '%TN%'
+--took out filter for TN
 group by cbsaname, 
 		cbsa
 order by sum(population) desc;
@@ -177,41 +177,41 @@ order by population desc;
 --     a. Find all rows in the prescription table where total_claims is at least 3000. Report the drug_name and the total_claim_count.
 
 select drug_name, 
-		sum(total_claim_count) 
-		as total_claim_count
+		total_claim_count
+		--took out sum ^
 from prescription
 where total_claim_count>=3000
-group by drug_name
-order by sum(total_claim_count) desc;
+order by total_claim_count desc;
 
 --     b. For each instance that you found in part a, add a column that indicates whether the drug is an opioid.
 
 select drug_name, 
-case when opioid_drug_flag='Y' then 'opioid'
+		case when opioid_drug_flag='Y' then 'opioid'
 		 else 'not an opioid' end as drug_type,
-		 sum(total_claim_count) as total_claim_count
+		total_claim_count
+		--took out sum ^
 from prescription
-inner join drug
+inner join drug 
 using (drug_name)
 where total_claim_count>=3000
-group by drug_name, drug_type
-order by sum(total_claim_count) desc;
+order by total_claim_count desc;
 
 --     c. Add another column to your answer from the previous part which gives the prescriber first and last name associated with each row.
 
 select drug_name, 
 case when opioid_drug_flag='Y' then 'opioid'
 		 else 'not an opioid' end as drug_type,
-		 sum(total_claim_count) as total_claim_count,
-		 nppes_provider_first_name, nppes_provider_last_org_name
+		 total_claim_count,
+		 --took out sum ^
+		 nppes_provider_first_name,
+		 nppes_provider_last_org_name
 from prescription
 inner join drug
 using (drug_name)
 inner join prescriber
 using (npi)
 where total_claim_count>=3000
-group by drug_name, drug_type, nppes_provider_first_name, nppes_provider_last_org_name
-order by sum(total_claim_count) desc;
+order by total_claim_count desc;
 
 
 -- 7. The goal of this exercise is to generate a full list of all pain management specialists in Nashville and the number of claims they had for each opioid. **Hint:** The results from all 3 parts will have 637 rows.
@@ -237,7 +237,8 @@ select p1.npi,
 from prescriber as p1
 cross join drug as d
 full join prescription as p2
-using (drug_name)
+using (drug_name, npi)
+--added npi ^
 where specialty_description='Pain Management' 
 	AND nppes_provider_city = 'NASHVILLE' 
 	and opioid_drug_flag = 'Y'
@@ -254,7 +255,7 @@ select p1.npi,
 from prescriber as p1
 cross join drug as d
 full join prescription as p2
-using (drug_name)
+using (drug_name, npi)
 where specialty_description='Pain Management' 
 	AND nppes_provider_city = 'NASHVILLE' 
 	and opioid_drug_flag = 'Y'
